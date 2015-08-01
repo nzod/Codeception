@@ -153,6 +153,13 @@ class Configuration
 
         self::$logDir = $config['paths']['log'];
 
+        // check includes
+        $invalid = self::checkIncludePaths($config['include']);
+        if (count($invalid)) {
+            $pths = implode("\n", array_map(function($pth){ return " - $pth"; }, $invalid));
+            throw new ConfigurationException("Cannot find include path(s):\n$pths");
+        }
+
         // config without tests, for inclusion of other configs
         if (count($config['include']) and !isset($config['paths']['tests'])) {
             return $config;
@@ -188,6 +195,13 @@ class Configuration
         self::loadSuites();
 
         return $config;
+    }
+    
+    protected static function checkIncludePaths($paths)
+    {
+        return array_filter($paths, function($pth) {
+            return !is_readable($pth);
+        });
     }
 
     protected static function loadBootstrap($bootstrap)
